@@ -1,33 +1,52 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Response struct {
-	Message string
-}
-
-func Home(w http.ResponseWriter, r *http.Request) {
-	resp := Response{Message: "Api is on"}
-	bytes, err := json.Marshal(resp)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+func main() {
+	var conn *amqp.Connection
+	var err error
+	fmt.Println("Waiting rabbit mq setup")
+	for {
+		conn, err = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+		if err == nil {
+			break
+		}
 	}
-	w.Header().Add("content-type", "application/json")
-	w.Write(bytes)
+
+	defer conn.Close()
+
+	rabbitmq, err := conn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer rabbitmq.Close()
+
+	err = rabbitmq.ExchangeDeclare(
+		"default", // name
+		"fanout",  // type
+		true,      // durable
+		false,     // auto-deleted
+		false,     // internal
+		false,     // no-wait
+		nil,       // arguments
+	)
+	failOnError(err, "Failed to declare an exchange")
+
+	fmt.Println("Server started")
+	StartServerWithRabbitmqInstance(rabbitmq)
 }
 
-func HandleRequest() {
-	http.HandleFunc("/", Home)
+func StartServerWithRabbitmqInstance(rabbitmq *amqp.Channel) {
+	http.Handle("/", &HttpHandler{rabbitmq})
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-func main() {
-	fmt.Println("Server started")
-	HandleRequest()
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Panicf("%s: %s", msg, err)
+	}
 }

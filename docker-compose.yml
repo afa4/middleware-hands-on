@@ -1,7 +1,28 @@
 version: "3"
+
 services:
+  rabbitmq:
+    image: rabbitmq:3 # ports: 5672, 15672 (management)
+    container_name: 'rabbitmq'
+    user: "${UID}:${GID}"
+    expose:
+        - 5672
+    volumes:
+        - ./docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ./docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - hands_on
+
   api:
     build: api/
+    user: "${UID}:${GID}"
     ports:
       - "8000:8000"
+    depends_on:
+      - rabbitmq
+    networks:
+      - hands_on
 
+networks:
+  hands_on:
+    driver: bridge

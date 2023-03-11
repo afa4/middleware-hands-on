@@ -1,7 +1,14 @@
 # MIDDLEWARE HANDS ON
 
-build api
+This simple project is a composition of three docker containers:
 
-cd api
+- rabbitMQ broker
+- publisher api
+- consumer server
 
-docker build -t api:latest .
+### build
+
+```bash
+chmod +x start.sh
+./start
+```
