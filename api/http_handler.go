@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -9,6 +10,10 @@ import (
 
 type Response struct {
 	Message string
+}
+
+type Request struct {
+	Name string
 }
 
 type HttpHandler struct {
@@ -20,14 +25,24 @@ func (h *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	name := "from request"
-	err := h.publishName(name)
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	body := Request{}
+	err = json.Unmarshal(bytes, &body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	err = h.publishName(body.Name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	resp := Response{Message: "Message sent"}
-	bytes, err := json.Marshal(resp)
+	bytes, err = json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -38,10 +53,10 @@ func (h *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HttpHandler) publishName(name string) error {
 	return h.rabbitmq.Publish(
-		"default", // exchange
-		"",        // routing key
-		false,     // mandatory
-		false,     // immediate
+		EXCHANGE_NAME, // exchange
+		"",            // routing key
+		false,         // mandatory
+		false,         // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(name),

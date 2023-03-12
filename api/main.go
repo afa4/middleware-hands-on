@@ -8,10 +8,12 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+var EXCHANGE_NAME = "exchange"
+
 func main() {
 	var conn *amqp.Connection
 	var err error
-	fmt.Println("Waiting rabbit mq setup")
+	fmt.Println("PUBLISHER Waiting rabbit mq setup")
 	for {
 		conn, err = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
 		if err == nil {
@@ -26,13 +28,13 @@ func main() {
 	defer rabbitmq.Close()
 
 	err = rabbitmq.ExchangeDeclare(
-		"default", // name
-		"fanout",  // type
-		true,      // durable
-		false,     // auto-deleted
-		false,     // internal
-		false,     // no-wait
-		nil,       // arguments
+		EXCHANGE_NAME, // name
+		"fanout",      // type
+		true,          // durable
+		false,         // auto-deleted
+		false,         // internal
+		false,         // no-wait
+		nil,           // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
 

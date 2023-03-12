@@ -15,9 +15,19 @@ services:
 
   api:
     build: api/
+    container_name: 'api'
     user: "${UID}:${GID}"
     ports:
       - "8000:8000"
+    depends_on:
+      - rabbitmq
+    networks:
+      - hands_on
+  
+  consumer:
+    build: consumer/
+    container_name: 'consumer'
+    user: "${UID}:${GID}"
     depends_on:
       - rabbitmq
     networks:

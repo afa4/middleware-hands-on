@@ -1,4 +1,4 @@
-module github.com/afa4/middleware-hands-on
+module github.com/afa4/middleware-hands-on/api
 
 go 1.19
 
