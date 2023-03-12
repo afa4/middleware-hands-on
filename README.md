@@ -21,3 +21,26 @@ chmod +x start.sh
 ./build.sh
 ./start.sh
 ```
+
+### playing
+
+After running de app with previous section instructions
+run a POST request on the root resource / with the body below:
+
+```json
+{
+  "Name": "Alice"
+}
+```
+
+Check the logs of consumer container
+
+```bash
+docker-compose logs consumer -f
+```
+
+You should see a greeting with the requested name
+
+````
+consumer  | Hello Alice
+```
